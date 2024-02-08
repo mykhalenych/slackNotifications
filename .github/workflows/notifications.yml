@@ -10,14 +10,19 @@ jobs:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
-      - name: Extract PR Description
-        id: extract_pr_description
+      - name: Extract PR Information
+        id: extract_pr_info
         run: |
-          echo "DESCRIPTION=$(jq -r '.pull_request.body' $GITHUB_EVENT_PATH)" >> $GITHUB_ENV
+          PR_AUTHOR=$(jq -r '.pull_request.user.login' "$GITHUB_EVENT_PATH")
+          PR_DESCRIPTION=$(jq -r '.pull_request.body' "$GITHUB_EVENT_PATH")
+          COMMIT_MESSAGE=$(jq -r '.pull_request.title' "$GITHUB_EVENT_PATH")
+          echo "::set-output name=author::$PR_AUTHOR"
+          echo "::set-output name=description::$PR_DESCRIPTION"
+          echo "::set-output name=commit_message::$COMMIT_MESSAGE"
 
       - name: Send Notification to Slack
         uses: abinoda/slack-action@master
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         with:
-          args: '{\"channel\":\"${{ secrets.SLACK_CHANNEL_ID }}\",\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Repository pushed to:* ${{ github.event.repository.name }}\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Pusher:* ${{ github.event.pusher.name }}\n*Commit Message:* ${{ github.event.head_commit.message }}\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"<${{ github.event.repository.html_url }}|View Repository>\"}}]}'
+          args: '{"channel":"${{ secrets.SLACK_CHANNEL_ID }}","blocks":[{"type":"section","text":{"type":"mrkdwn","text":"*Repository pushed to:* ${{ github.event.repository.name }}"}},{"type":"section","text":{"type":"mrkdwn","text":"*Pusher:* ${{ steps.extract_pr_info.outputs.author }}"}},{"type":"section","text":{"type":"mrkdwn","text":"*Commit Message:* ${{ steps.extract_pr_info.outputs.commit_message }}"}},{"type":"section","text":{"type":"mrkdwn","text":"*Description:* ${{ steps.extract_pr_info.outputs.description }}"}},{"type":"section","text":{"type":"mrkdwn","text":"<${{ github.event.repository.html_url }}|View Repository>"}}]}'
