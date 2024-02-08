@@ -10,14 +10,19 @@ jobs:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
-      - name: Extract PR Description
-        id: extract_pr_description
+      - name: Extract PR Information
+        id: extract_pr_info
         run: |
-          echo "DESCRIPTION=$(jq -r '.pull_request.body' $GITHUB_EVENT_PATH)" >> $GITHUB_ENV
+          PR_CREATOR=$(jq -r '.pull_request.user.login' $GITHUB_EVENT_PATH)
+          PR_DESCRIPTION=$(jq -r '.pull_request.body' $GITHUB_EVENT_PATH)
+          COMMIT_MESSAGES=$(git log --pretty=format:"%h - %an: %s" $GITHUB_SHA^..$GITHUB_SHA)
+          echo "::set-output name=creator::$PR_CREATOR"
+          echo "::set-output name=description::$PR_DESCRIPTION"
+          echo "::set-output name=commits::$COMMIT_MESSAGES"
 
       - name: Send Notification to Slack
         uses: pullreminders/slack-action@master
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         with:
-          args: '{\"channel\":\"${{ secrets.SLACK_CHANNEL_ID }}\",\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Repository pushed to:* ${{ github.event.repository.name }}\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Pusher:* ${{ github.event.pusher.name }}\n*Commit Message:* ${{ github.event.head_commit.message }}\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"<${{ github.event.repository.html_url }}|View Repository>\"}}]}'
+          args: '{\"channel\":\"${{ secrets.SLACK_CHANNEL_ID }}\",\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Pull Request Created By:* ${{ steps.extract_pr_info.outputs.creator }}\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Pull Request Description:* ${{ steps.extract_pr_info.outputs.description }}\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Commit Messages:* ${{ steps.extract_pr_info.outputs.commits }}\"}}]}'
