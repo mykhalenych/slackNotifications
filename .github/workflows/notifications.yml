@@ -1,4 +1,4 @@
-name: Notify Slack on merge
+name: Notify Slack on PR Close
 
 on:
   pull_request:
@@ -6,10 +6,13 @@ on:
 
 jobs:
   notify_slack_merge:
-    name: Notify Slack on merge
-    if: github.event.pull_request.merged == true
+    name: Notify Slack on PR Close
+    if: github.event.pull_request.merged == true || github.event.pull_request.merged == false
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
       - name: Extract PR Information
         id: extract_pr_info
         run: |
@@ -25,4 +28,4 @@ jobs:
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         with:
-          args: '{"channel":"${{ secrets.SLACK_CHANNEL_ID }}","blocks":[{"type":"section","text":{"type":"mrkdwn","text":"*Repository pushed to:* ${{ github.event.repository.name }}"}},{"type":"section","text":{"type":"mrkdwn","text":"*Pusher:* ${{ steps.extract_pr_info.outputs.author }}"}},{"type":"section","text":{"type":"mrkdwn","text":"*Commit Message:* ${{ steps.extract_pr_info.outputs.commit_message }}"}},{"type":"section","text":{"type":"mrkdwn","text":"*Description:* ${{ steps.extract_pr_info.outputs.description }}"}},{"type":"section","text":{"type":"mrkdwn","text":"<${{ github.event.repository.html_url }}|View Repository>"}}]}'
+          args: '{"channel":"${{ secrets.SLACK_CHANNEL_ID }}","blocks":[{"type":"section","text":{"type":"mrkdwn","text":"*Repository pushed to:* ${{ github.event.repository.name }}"}},{"type":"section","text":{"type":"mrkdwn","text":"*Pull Request Created By:* ${{ steps.extract_pr_info.outputs.author }}"}},{"type":"section","text":{"type":"mrkdwn","text":"*Commit Message:* ${{ steps.extract_pr_info.outputs.commit_message }}"}},{"type":"section","text":{"type":"mrkdwn","text":"*Description:* ${{ steps.extract_pr_info.outputs.d
