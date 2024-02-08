@@ -9,7 +9,7 @@ jobs:
     name: Notify Slack on pushes
     runs-on: ubuntu-latest
     steps:
-      - uses: abinoda/slack-action@main
+      - uses: pullreminders/slack-action@master
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         with:
