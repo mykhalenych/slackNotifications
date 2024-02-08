@@ -12,13 +12,13 @@ jobs:
     steps:
       - name: Extract PR Information
         id: extract_pr_info
-        run: |
-          PR_CREATOR=$(jq -r '.pull_request.user.login' $GITHUB_EVENT_PATH)
-          PR_DESCRIPTION=$(jq -r '.pull_request.body' $GITHUB_EVENT_PATH)
-          COMMIT_MESSAGES=$(git log --pretty=format:"%h - %an: %s" $GITHUB_SHA^..$GITHUB_SHA)
-          echo "::set-output name=creator::$PR_CREATOR"
-          echo "::set-output name=description::$PR_DESCRIPTION"
-          echo "::set-output name=commits::$COMMIT_MESSAGES"
+    run: |
+      PR_CREATOR=$(jq -r '.pull_request.user.login' "$GITHUB_EVENT_PATH")
+      PR_DESCRIPTION=$(jq -r '.pull_request.body' "$GITHUB_EVENT_PATH")
+      COMMIT_MESSAGES=$(git log --pretty=format:"%h - %an: %s" "$GITHUB_SHA"^.."$GITHUB_SHA")
+      echo "::set-output name=creator::$PR_CREATOR"
+      echo "::set-output name=description::$PR_DESCRIPTION"
+      echo "::set-output name=commits::$COMMIT_MESSAGES"
 
       - name: Send Notification to Slack
         uses: pullreminders/slack-action@master
