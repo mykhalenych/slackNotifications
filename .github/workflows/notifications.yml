@@ -1,23 +1,17 @@
-name: Notify Slack on merge
-
+name: Notify  Slack on push
 on:
-  pull_request:
-    types: [closed]
+  push:
+    branches:
+      -  'main'
 
 jobs:
-  notify_slack_merge:
-    name: Notify Slack on merge
-    if: github.event.pull_request.merged == true
+  notify_slack_push:
+    name: Notify Slack on pushes
     runs-on: ubuntu-latest
     steps:
-      - name: Extract PR Description
-        id: extract_pr_description
-        run: |
-          echo "DESCRIPTION=$(jq -r '.pull_request.body' $GITHUB_EVENT_PATH)" >> $GITHUB_ENV
-
-      - name: Send Notification to Slack
-        uses: mykhalenych/slackNotifications@main
+      - uses: mykhalenych/slackNotifications@main
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         with:
           args: '{\"channel\":\"${{ secrets.SLACK_CHANNEL_ID }}\",\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Repository pushed to:* ${{ github.event.repository.name }}\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Pusher:* ${{ github.event.pusher.name }}\n*Commit Message:* ${{ github.event.head_commit.message }}\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"<${{ github.event.repository.html_url }}|View Repository>\"}}]}'
+        if: success()
