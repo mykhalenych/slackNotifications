@@ -1,31 +1,18 @@
-name: Notify Slack on PR Close
+name: Notify Slack on PR Merge
 
 on:
   pull_request:
     types: [closed]
 
 jobs:
-  notify_slack_merge:
-    name: Notify Slack on PR Close
-    if: github.event.pull_request.merged == true || github.event.pull_request.merged == false
+  notify_merged_pull_request:
+    name: Notify Slack on merged pull requests
     runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.merged == true }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Extract PR Information
-        id: extract_pr_info
-        run: |
-          PR_AUTHOR=$(jq -r '.pull_request.user.login' "$GITHUB_EVENT_PATH")
-          PR_DESCRIPTION=$(jq -r '.pull_request.body' "$GITHUB_EVENT_PATH")
-          COMMIT_MESSAGE=$(jq -r '.pull_request.title' "$GITHUB_EVENT_PATH")
-          echo "::set-output name=author::$PR_AUTHOR"
-          echo "::set-output name=description::$PR_DESCRIPTION"
-          echo "::set-output name=commit_message::$COMMIT_MESSAGE"
-
-      - name: Send Notification to Slack
-        uses: abinoda/slack-action@master
+      - uses: abinoda/slack-action@master
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         with:
-          args: '{"channel":"${{ secrets.SLACK_CHANNEL_ID }}","blocks":[{"type":"section","text":{"type":"mrkdwn","text":"*Repository pushed to:* ${{ github.event.repository.name }}"}},{"type":"section","text":{"type":"mrkdwn","text":"*Pull Request Created By:* ${{ steps.extract_pr_info.outputs.author }}"}},{"type":"section","text":{"type":"mrkdwn","text":"*Commit Message:* ${{ steps.extract_pr_info.outputs.commit_message }}"}},{"type":"section","text":{"type":"mrkdwn","text":"*Description:* ${{ steps.extract_pr_info.outputs.description }}"}},{"type":"section","text":{"type":"mrkdwn","text":"<${{ github.event.repository.html_url }}|View Repository>"}}]}'
+          args: '{\"channel\":\"${{ secrets.SLACK_CHANNEL_ID }}\",\"blocks\":[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Merged Pull Request:* ${{ github.event.pull_request.title }}\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"*Pull Request by :* ${{ github.event.pull_request.user.login }}\n*Merged at:* ${{ github.event.pull_request.merged_at }}\"}},{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":\"<${{ github.event.pull_request.html_url }}|View Merged Pull Request>\"}}]}'
+        if: success()
