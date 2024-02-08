@@ -16,7 +16,7 @@ jobs:
           echo "DESCRIPTION=$(jq -r '.pull_request.body' $GITHUB_EVENT_PATH)" >> $GITHUB_ENV
 
       - name: Send Notification to Slack
-        uses: abinoda/slack-action@main
+        uses: pullreminders/slack-action@master
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         with:
